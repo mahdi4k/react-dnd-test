@@ -1,5 +1,6 @@
 import styled from '@emotion/styled';
 import {Draggable} from "react-beautiful-dnd";
+import {TaskDTO} from "../App";
 
 
 const Container = styled.div<{ isDragging?: boolean; }>`
@@ -9,7 +10,12 @@ const Container = styled.div<{ isDragging?: boolean; }>`
   margin-bottom: 8px;
   background-color: ${props => props.isDragging ? 'lightgreen' : 'aliceblue'};
 `;
-const Task = (props) => {
+
+type Props = {
+    task : TaskDTO
+    index: number
+}
+const Task = (props : Props) => {
     return (
         <Draggable draggableId={props.task.id} index={props.index}>
             {(provided, snapshot) => {

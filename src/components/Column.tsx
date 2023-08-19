@@ -2,6 +2,7 @@ import styled from '@emotion/styled';
 import Task from './Task';
 import {Droppable} from "react-beautiful-dnd";
 import {useEffect, useState} from "react";
+import { ColumnDTO, TaskDTO} from "../App";
 
 const Container = styled.div`
   margin: 8px;
@@ -21,8 +22,11 @@ const TaskList = styled.div<{ isDraggingOver?: boolean; }>`
   min-height: 100px;
 `;
 
-
-const Column = (props) => {
+type Props ={
+    column:ColumnDTO
+    tasks:TaskDTO[]
+}
+const Column = (props:Props) => {
     const [isMounted, setIsMounted] = useState(false);
 
     useEffect(() => {
