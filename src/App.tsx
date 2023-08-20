@@ -1,8 +1,8 @@
 import './App.css'
-import {DragDropContext, DropResult} from "react-beautiful-dnd";
+import { DragDropContext, DropResult } from "react-beautiful-dnd";
 import initialData from "./initialData";
 import Column from "./components/Column";
-import {useState} from "react";
+import { useState } from "react";
 import styled from "@emotion/styled";
 
 
@@ -43,36 +43,34 @@ function App() {
 
     };
 
-    const moveInList = (start: ColumnDTO, source: SourceDTO, destination: { index: number }) => {
+    const moveInList = (start: ColumnDTO, source: SourceDTO, destination: { index: number, droppableId: string }, draggableId) => {
 
-        const newTaskIds = state.tasks;
+        const column = state.columns[destination.droppableId];
 
+        const newTaskIds = state.tasks.filter(el => el.type == column.type);
         // remove(move) old item
         const [removed] = newTaskIds.splice(source.index, 1);
+        console.log("🚀 ~ file: App.tsx:58 ~ moveInList ~ removed:", removed)
+
 
 
         // add(move) new item
         newTaskIds.splice(destination.index, 0, removed);
-        console.log(start)
-        const newColumn = {
-            ...start,
-            taskIds: newTaskIds,
-        };
+
+        // merge tasks with new order 
+        const ids = new Set(newTaskIds.map(d => d.id));
+        const merged = [...newTaskIds, ...state.tasks.filter(d => !ids.has(d.id))];
 
         const newState = {
-            ...state,
-            columns: {
-                ...state.columns,
-                [newColumn.id]: newColumn,
-            }
+             ...state,
+             tasks:merged
         }
-
         setNewState(newState)
         return;
     }
 
     const onDragEnd = (result: DropResult) => {
-        const {destination, source, draggableId} = result;
+        const { destination, source, draggableId } = result;
 
         if (!destination) {
             return;
@@ -86,21 +84,38 @@ function App() {
         const finish = state.columns[destination.droppableId];
 
         if (start === finish) {
-            moveInList( start, source, destination);
+            moveInList(start, source, destination, draggableId);
+        } else {
+
+            // step 1 : find started column and geted(splice) that item  
+            const startTaskIds = state.tasks.filter(el => el.type == start.type);
+            const [removed] = startTaskIds.splice(source.index, 1);
+            console.log(removed,'remveved');
+            
+            // step 2 moved spliced item from step 1 to finish destination 
+            const finishTaskIds = state.tasks.filter(el => el.type == finish.type);
+            // change type destiniation column type
+            removed.type = finish.type
+            // move selected item to distination final
+            finishTaskIds.splice(destination.index, 0, removed);
+            console.log(finishTaskIds);
+            
+            // merge and remove duplicate items
+            const final = [...startTaskIds,...finishTaskIds]
+            console.log("🚀 ~ file: App.tsx:105 ~ onDragEnd ~ final:", final)
+            const ids = new Set(final.map(d => d.id));
+            const merged = [...final, ...state.tasks.filter(d => !ids.has(d.id))];
+            console.log("🚀 ~ file: App.tsx:109 ~ onDragEnd ~ merged:", merged)
+
+            const newState = {
+                ...state,
+                tasks: merged,
+            };
+            console.log(newState,'newState');
+
+            setNewState(newState);
         }
-        const newState = {
-            ...state,
-            tasks: state.tasks.map(value => {
-                if (value.id === draggableId) {
-                    return {
-                        ...value,
-                        ...{type: finish.type}
-                    }
-                }
-                return value
-            }),
-        };
-        setNewState(newState);
+
     }
     return (
         <DragDropContext onDragUpdate={onDragUpdate} onDragStart={onDragStart} onDragEnd={onDragEnd}>
@@ -108,7 +123,7 @@ function App() {
                 {state.columnOrder.map((columnId) => {
                     const column = state.columns[columnId];
                     const tasks = state.tasks.filter((task: TaskDTO) => task.type == column.type);
-                    return <Column key={column.id} column={column} tasks={tasks}/>;
+                    return <Column key={column.id} column={column} tasks={tasks} />;
                 })}
             </Container>
         </DragDropContext>
